@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>Jothon Doorbell</title>
+        <title>🔔 Jothon Doorbell</title>
         <link rel="stylesheet" href="index.css">
     </head>
     <body>
@@ -43,6 +43,17 @@
             }
         });
 
+        // Add visibility change handling
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                // Tab is hidden
+                document.title = "🔔 Jothon Doorbell (Background)";
+            } else {
+                // Tab is visible
+                document.title = "🔔 Jothon Doorbell";
+            }
+        });
+
         // Fetch messages
         async function checkNewMessages() {
             try {
@@ -60,7 +71,7 @@
                       setTimeout(() => {
                         document.body.classList.remove("blink");
                       }, 10000);
-                      audio.play();
+                      audio.play().catch(e => console.log('Audio play failed:', e));
 
                       // Send notification
                       if (notificationPermission) {
@@ -68,6 +79,17 @@
                               body: `${message} @ ${time}`,
                               icon: "/favicon.ico" // Add your favicon path here
                           });
+                      }
+
+                      // Change title to alert user if tab is not active
+                      if (document.hidden) {
+                          document.title = "🚨 門鈴響了！";
+                          // Reset title when tab becomes active again
+                          const resetTitle = function() {
+                              document.title = "Jothon Doorbell";
+                              document.removeEventListener('visibilitychange', resetTitle);
+                          };
+                          document.addEventListener('visibilitychange', resetTitle);
                       }
                     }
                   }
