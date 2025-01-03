@@ -1,6 +1,6 @@
 # Jothon 門鈴
 
-g0v.github.io/jothon-doorbell/
+https://g0v.github.io/jothon-doorbell/
 
 g0v 揪松團 NPOHub 的網頁版門鈴通知系統，監控 Slack 訊息並在有人按門鈴時提供即時通知。
 
