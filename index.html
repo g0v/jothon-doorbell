@@ -1,0 +1,83 @@
+<html>
+    <head>
+        <title>Jothon Doorbell</title>
+        <link rel="stylesheet" href="index.css">
+    </head>
+    <body>
+        <div id="alert">Click anywhere to allow sound play</div>
+        <h2 id="current-time">現在時間：
+            <span>00:00</span>
+        </h2>
+        <h1 id="last-message">上一次門鈴：
+            <span></span>
+        </h1>
+    </body>
+    <script>
+        const currentTime = document.querySelector("#current-time span");
+        const lastMessage = document.querySelector("#last-message span");
+        const audio = new Audio('Mario Coin.wav');
+        
+        // Get channel from URL parameter, default to Jothon channel
+        const urlParams = new URLSearchParams(window.location.search);
+        const channel = urlParams.get('channel') || 'C0385B90D';
+
+        // Update time
+        currentTime.textContent = new Date().toLocaleTimeString();
+        setInterval(() => {
+            currentTime.textContent = new Date().toLocaleTimeString();
+        }, 100);
+
+        document.querySelector("#alert").addEventListener("click", () => {
+          document.querySelector("#alert").style.display = "none";
+        });
+
+        // Add notification request
+        let notificationPermission = false;
+        
+        document.querySelector("#alert").addEventListener("click", async () => {
+            document.querySelector("#alert").style.display = "none";
+            // Request notification permission
+            if ("Notification" in window) {
+                const permission = await Notification.requestPermission();
+                notificationPermission = permission === "granted";
+            }
+        });
+
+        // Fetch messages
+        async function checkNewMessages() {
+            try {
+                const response = await fetch(`https://g0v-slack-archive.g0v.ronny.tw/index/getmessage?channel=${channel}`);
+                const data = await response.json();
+                
+                if (data.messages && data.messages.length > 0) {
+                  const message = data.messages[0].text;
+                  if (message.includes("開門")) {
+                    if (lastMessage.dataset.lastTime !== data.messages[0].ts && data.messages[0].ts > (Date.now() / 1000) - 10) {
+                      const time = new Date(data.messages[0].ts * 1000).toLocaleTimeString();
+                      lastMessage.textContent = `${message} @ ${time}`;
+                      lastMessage.dataset.lastTime = data.messages[0].ts;
+                      document.body.classList.add("blink");
+                      setTimeout(() => {
+                        document.body.classList.remove("blink");
+                      }, 10000);
+                      audio.play();
+
+                      // Send notification
+                      if (notificationPermission) {
+                          new Notification("門鈴響了！", {
+                              body: `${message} @ ${time}`,
+                              icon: "/favicon.ico" // Add your favicon path here
+                          });
+                      }
+                    }
+                  }
+                }
+            } catch (error) {
+                console.error('Error fetching messages:', error);
+            }
+        }
+
+        // Check for new messages every second
+        setInterval(checkNewMessages, 1000);
+    </script>
+</html>
